@@ -10,6 +10,8 @@
         <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/MarkerCluster.css">
         <link rel="stylesheet" href="css/MarkerCluster.Default.css">
+        <link rel="stylesheet" href="css/filter.css">
+<link rel="stylesheet" href="css/nouislider.min.css">
         <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
         <style>
         html, body, #map {
@@ -35,6 +37,9 @@
         <script src="js/labels.js"></script>
         <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
         <script src="js/leaflet.markercluster.js"></script>
+        <script src="js/tailDT.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/wNumb.js"></script>
         <script src="data/Untitledspreadsheetdeaths_1.js"></script>
         <script>
         var highlightLayer;
@@ -170,6 +175,322 @@
               addLabel(layer, i);
               i++;
         });
+        var mapDiv = document.getElementById('map');
+        var row = document.createElement('div');
+        row.className="row";
+        row.id="all";
+        row.style.height = "100%";
+        var col1 = document.createElement('div');
+        col1.className="col9";
+        col1.id = "mapWindow";
+        col1.style.height = "99%";
+        col1.style.width = "80%";
+        col1.style.display = "inline-block";
+        var col2 = document.createElement('div');
+        col2.className="col3";
+        col2.id = "menu";
+        col2.style.display = "inline-block";
+        mapDiv.parentNode.insertBefore(row, mapDiv);
+        document.getElementById("all").appendChild(col1);
+        document.getElementById("all").appendChild(col2);
+        col1.appendChild(mapDiv)
+        var Filters = {"death_date": "str","death_place": "str"};
+        function filterFunc() {
+          map.eachLayer(function(lyr){
+          if ("options" in lyr && "dataVar" in lyr["options"]){
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try{
+              for (key in Filters){
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "")
+                if (Filters[key] == "str" || Filters[key] == "bool"){
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options
+                  for (var i=0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                    try{
+                      if (key in features[0].properties){
+                        for (i = features.length - 1;
+                          i >= 0; --i){
+                          if (selection.indexOf(
+                          features[i].properties[key])<0
+                          && selection.length>0) {
+                          features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                  }
+                }
+                if (Filters[key] == "int"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (parseInt(features[i].properties[key])
+                          < sliderVals[0]
+                          || parseInt(features[i].properties[key])
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "real"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (features[i].properties[key]
+                          < sliderVals[0]
+                          || features[i].properties[key]
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "date"
+                  || Filters[key] == "datetime"
+                  || Filters[key] == "time"){
+                  try{
+                    if (key in features[0].properties){
+                      HTMLkey = key.replace(/[&\/\\#,+()$~%.'":*?<>{} ]/g, '');
+                      startdate = document.getElementById("dat_" +
+                        HTMLkey + "_date1").value.replace(" ", "T");
+                      enddate = document.getElementById("dat_" +
+                        HTMLkey + "_date2").value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i){
+                        if (features[i].properties[key] < startdate
+                          || features[i].properties[key] > enddate){
+                          features.splice(i,1);
+                        }
+                      }
+                    }
+                  } catch(err){
+                  }
+                }
+              }
+            } catch(err){
+            }
+          this[lyr["options"]["layerName"]].clearLayers();
+          this[lyr["options"]["layerName"]].addData(features);
+        var i = 0;
+        layer_Untitledspreadsheetdeaths_1.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['death_place'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['death_place']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Untitledspreadsheetdeaths_1'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+          }
+          })
+        }
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_death_date = document.createElement('div');
+            div_death_date.id = "div_death_date";
+            div_death_date.className= "filterselect";
+            document.getElementById("menu").appendChild(div_death_date);
+            sel_death_date = document.createElement('select');
+            sel_death_date.multiple = true;
+            sel_death_date.size = 10;
+            sel_death_date.id = "sel_death_date";
+            var death_date_options_str = "<option value='' unselected></option>";
+            sel_death_date.onchange = function(){filterFunc()};
+            death_date_options_str  += '<option value="01.01.2020">01.01.2020</option>';
+            death_date_options_str  += '<option value="01.03.2017">01.03.2017</option>';
+            death_date_options_str  += '<option value="01.07.2018">01.07.2018</option>';
+            death_date_options_str  += '<option value="01.09.2017">01.09.2017</option>';
+            death_date_options_str  += '<option value="01.09.2019">01.09.2019</option>';
+            death_date_options_str  += '<option value="01.11.2017">01.11.2017</option>';
+            death_date_options_str  += '<option value="02.06.2017">02.06.2017</option>';
+            death_date_options_str  += '<option value="02.07.2017">02.07.2017</option>';
+            death_date_options_str  += '<option value="02.09.2017">02.09.2017</option>';
+            death_date_options_str  += '<option value="02.10.2017">02.10.2017</option>';
+            death_date_options_str  += '<option value="03.02.2016">03.02.2016</option>';
+            death_date_options_str  += '<option value="03.10.2017">03.10.2017</option>';
+            death_date_options_str  += '<option value="06.03.2016">06.03.2016</option>';
+            death_date_options_str  += '<option value="06.06.2017">06.06.2017</option>';
+            death_date_options_str  += '<option value="06.09.2015">06.09.2015</option>';
+            death_date_options_str  += '<option value="06.10.2017">06.10.2017</option>';
+            death_date_options_str  += '<option value="07.02.2017">07.02.2017</option>';
+            death_date_options_str  += '<option value="07.02.2018">07.02.2018</option>';
+            death_date_options_str  += '<option value="07.03.2017">07.03.2017</option>';
+            death_date_options_str  += '<option value="07.08.2014">07.08.2014</option>';
+            death_date_options_str  += '<option value="07.09.2016">07.09.2016</option>';
+            death_date_options_str  += '<option value="08.02.2016">08.02.2016</option>';
+            death_date_options_str  += '<option value="08.03.2016">08.03.2016</option>';
+            death_date_options_str  += '<option value="08.04.2016">08.04.2016</option>';
+            death_date_options_str  += '<option value="08.09.2017">08.09.2017</option>';
+            death_date_options_str  += '<option value="08.10.2017">08.10.2017</option>';
+            death_date_options_str  += '<option value="09.01.2020">09.01.2020</option>';
+            death_date_options_str  += '<option value="09.03.2016">09.03.2016</option>';
+            death_date_options_str  += '<option value="09.05.2017">09.05.2017</option>';
+            death_date_options_str  += '<option value="09.06.2017">09.06.2017</option>';
+            death_date_options_str  += '<option value="09.11.2017">09.11.2017</option>';
+            death_date_options_str  += '<option value="10.02.2017">10.02.2017</option>';
+            death_date_options_str  += '<option value="10.03.2017">10.03.2017</option>';
+            death_date_options_str  += '<option value="10.09.2015">10.09.2015</option>';
+            death_date_options_str  += '<option value="10.09.2017">10.09.2017</option>';
+            death_date_options_str  += '<option value="11.01.2020">11.01.2020</option>';
+            death_date_options_str  += '<option value="11.03.2016">11.03.2016</option>';
+            death_date_options_str  += '<option value="11.04.2016">11.04.2016</option>';
+            death_date_options_str  += '<option value="11.07.2014">11.07.2014</option>';
+            death_date_options_str  += '<option value="11.08.2017">11.08.2017</option>';
+            death_date_options_str  += '<option value="11.09.2017">11.09.2017</option>';
+            death_date_options_str  += '<option value="12.02.2017">12.02.2017</option>';
+            death_date_options_str  += '<option value="12.03.2016">12.03.2016</option>';
+            death_date_options_str  += '<option value="12.06.2017">12.06.2017</option>';
+            death_date_options_str  += '<option value="12.09.2017">12.09.2017</option>';
+            death_date_options_str  += '<option value="12.09.2019">12.09.2019</option>';
+            death_date_options_str  += '<option value="12.10.2017">12.10.2017</option>';
+            death_date_options_str  += '<option value="13.03.2016">13.03.2016</option>';
+            death_date_options_str  += '<option value="13.03.2017">13.03.2017</option>';
+            death_date_options_str  += '<option value="13.03.2018">13.03.2018</option>';
+            death_date_options_str  += '<option value="13.09.2017">13.09.2017</option>';
+            death_date_options_str  += '<option value="14.03.2017">14.03.2017</option>';
+            death_date_options_str  += '<option value="14.06.2017">14.06.2017</option>';
+            death_date_options_str  += '<option value="14.07.2014">14.07.2014</option>';
+            death_date_options_str  += '<option value="14.09.2017">14.09.2017</option>';
+            death_date_options_str  += '<option value="14.10.2017">14.10.2017</option>';
+            death_date_options_str  += '<option value="15.03.2016">15.03.2016</option>';
+            death_date_options_str  += '<option value="15.05.2017">15.05.2017</option>';
+            death_date_options_str  += '<option value="15.06.2017">15.06.2017</option>';
+            death_date_options_str  += '<option value="15.06.2019">15.06.2019</option>';
+            death_date_options_str  += '<option value="15.09.2017">15.09.2017</option>';
+            death_date_options_str  += '<option value="15.11.2017">15.11.2017</option>';
+            death_date_options_str  += '<option value="16.02.2016">16.02.2016</option>';
+            death_date_options_str  += '<option value="16.03.2016">16.03.2016</option>';
+            death_date_options_str  += '<option value="16.03.2017">16.03.2017</option>';
+            death_date_options_str  += '<option value="16.09.2017">16.09.2017</option>';
+            death_date_options_str  += '<option value="17.02.2016">17.02.2016</option>';
+            death_date_options_str  += '<option value="17.03.2016">17.03.2016</option>';
+            death_date_options_str  += '<option value="17.07.2017">17.07.2017</option>';
+            death_date_options_str  += '<option value="17.10.2017">17.10.2017</option>';
+            death_date_options_str  += '<option value="17.12.2018">17.12.2018</option>';
+            death_date_options_str  += '<option value="18.01.2020">18.01.2020</option>';
+            death_date_options_str  += '<option value="18.02.2017">18.02.2017</option>';
+            death_date_options_str  += '<option value="18.03.2017">18.03.2017</option>';
+            death_date_options_str  += '<option value="18.04.2017">18.04.2017</option>';
+            death_date_options_str  += '<option value="18.09.2017">18.09.2017</option>';
+            death_date_options_str  += '<option value="19.03.2016">19.03.2016</option>';
+            death_date_options_str  += '<option value="19.04.2016">19.04.2016</option>';
+            death_date_options_str  += '<option value="19.04.2017">19.04.2017</option>';
+            death_date_options_str  += '<option value="19.09.2017">19.09.2017</option>';
+            death_date_options_str  += '<option value="19.10.2015">19.10.2015</option>';
+            death_date_options_str  += '<option value="19.10.2017">19.10.2017</option>';
+            death_date_options_str  += '<option value="20.01.2017">20.01.2017</option>';
+            death_date_options_str  += '<option value="20.08.2017">20.08.2017</option>';
+            death_date_options_str  += '<option value="20.10.2017">20.10.2017</option>';
+            death_date_options_str  += '<option value="2016">2016</option>';
+            death_date_options_str  += '<option value="2017">2017</option>';
+            death_date_options_str  += '<option value="21.01.2017">21.01.2017</option>';
+            death_date_options_str  += '<option value="21.05.2017">21.05.2017</option>';
+            death_date_options_str  += '<option value="21.08.2017">21.08.2017</option>';
+            death_date_options_str  += '<option value="21.09.2017">21.09.2017</option>';
+            death_date_options_str  += '<option value="21.10.2017">21.10.2017</option>';
+            death_date_options_str  += '<option value="21.12.2017">21.12.2017</option>';
+            death_date_options_str  += '<option value="22.01.2017">22.01.2017</option>';
+            death_date_options_str  += '<option value="22.02.2017">22.02.2017</option>';
+            death_date_options_str  += '<option value="22.06.2016">22.06.2016</option>';
+            death_date_options_str  += '<option value="22.09.2017">22.09.2017</option>';
+            death_date_options_str  += '<option value="23.02.2019">23.02.2019</option>';
+            death_date_options_str  += '<option value="23.04.2017">23.04.2017</option>';
+            death_date_options_str  += '<option value="23.09.2017">23.09.2017</option>';
+            death_date_options_str  += '<option value="24.07.2017">24.07.2017</option>';
+            death_date_options_str  += '<option value="24.09.2017">24.09.2017</option>';
+            death_date_options_str  += '<option value="24.10.2017">24.10.2017</option>';
+            death_date_options_str  += '<option value="25.02.2018">25.02.2018</option>';
+            death_date_options_str  += '<option value="25.04.2017">25.04.2017</option>';
+            death_date_options_str  += '<option value="25.05.2017">25.05.2017</option>';
+            death_date_options_str  += '<option value="25.09.2017">25.09.2017</option>';
+            death_date_options_str  += '<option value="25.11.2016">25.11.2016</option>';
+            death_date_options_str  += '<option value="26.01.2015">26.01.2015</option>';
+            death_date_options_str  += '<option value="26.04.2017">26.04.2017</option>';
+            death_date_options_str  += '<option value="26.08.2014">26.08.2014</option>';
+            death_date_options_str  += '<option value="27.08.2017">27.08.2017</option>';
+            death_date_options_str  += '<option value="27.09.2017">27.09.2017</option>';
+            death_date_options_str  += '<option value="27.10.2017">27.10.2017</option>';
+            death_date_options_str  += '<option value="28.01.2015">28.01.2015</option>';
+            death_date_options_str  += '<option value="28.04.2017">28.04.2017</option>';
+            death_date_options_str  += '<option value="28.09.2017">28.09.2017</option>';
+            death_date_options_str  += '<option value="29.01.2017">29.01.2017</option>';
+            death_date_options_str  += '<option value="29.04.2017">29.04.2017</option>';
+            death_date_options_str  += '<option value="29.10.2019">29.10.2019</option>';
+            death_date_options_str  += '<option value="30.03.2016">30.03.2016</option>';
+            death_date_options_str  += '<option value="30.04.2017">30.04.2017</option>';
+            death_date_options_str  += '<option value="30.08.2017">30.08.2017</option>';
+            death_date_options_str  += '<option value="30.10.2017">30.10.2017</option>';
+            death_date_options_str  += '<option value="31.01.2015">31.01.2015</option>';
+            death_date_options_str  += '<option value="31.01.2017">31.01.2017</option>';
+            death_date_options_str  += '<option value="31.08.2014">31.08.2014</option>';
+            sel_death_date.innerHTML = death_date_options_str;
+            div_death_date.appendChild(sel_death_date);
+            var lab_death_date = document.createElement('div');
+            lab_death_date.innerHTML = 'death_date';
+            lab_death_date.className = 'filterlabel';
+            div_death_date.appendChild(lab_death_date);
+            var reset_death_date = document.createElement('div');
+            reset_death_date.innerHTML = 'clear filter';
+            reset_death_date.className = 'filterlabel';
+            reset_death_date.onclick = function() {
+                var options = document.getElementById("sel_death_date").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_death_date.appendChild(reset_death_date);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_death_place = document.createElement('div');
+            div_death_place.id = "div_death_place";
+            div_death_place.className= "filterselect";
+            document.getElementById("menu").appendChild(div_death_place);
+            sel_death_place = document.createElement('select');
+            sel_death_place.multiple = true;
+            sel_death_place.size = 9;
+            sel_death_place.id = "sel_death_place";
+            var death_place_options_str = "<option value='' unselected></option>";
+            sel_death_place.onchange = function(){filterFunc()};
+            death_place_options_str  += '<option value="Debaltseve">Debaltseve</option>';
+            death_place_options_str  += '<option value="Hrjaštšuvate">Hrjaštšuvate</option>';
+            death_place_options_str  += '<option value="Kruhlyk">Kruhlyk</option>';
+            death_place_options_str  += '<option value="Libya ">Libya </option>';
+            death_place_options_str  += '<option value="Lugansk">Lugansk</option>';
+            death_place_options_str  += '<option value="Lugansk airport">Lugansk airport</option>';
+            death_place_options_str  += '<option value="Novosvitlivka">Novosvitlivka</option>';
+            death_place_options_str  += '<option value="Saint Petersburg">Saint Petersburg</option>';
+            death_place_options_str  += '<option value="Syria ">Syria </option>';
+            sel_death_place.innerHTML = death_place_options_str;
+            div_death_place.appendChild(sel_death_place);
+            var lab_death_place = document.createElement('div');
+            lab_death_place.innerHTML = 'death_place';
+            lab_death_place.className = 'filterlabel';
+            div_death_place.appendChild(lab_death_place);
+            var reset_death_place = document.createElement('div');
+            reset_death_place.innerHTML = 'clear filter';
+            reset_death_place.className = 'filterlabel';
+            reset_death_place.onclick = function() {
+                var options = document.getElementById("sel_death_place").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_death_place.appendChild(reset_death_place);
         resetLabels([layer_Untitledspreadsheetdeaths_1]);
         map.on("zoomend", function(){
             resetLabels([layer_Untitledspreadsheetdeaths_1]);
